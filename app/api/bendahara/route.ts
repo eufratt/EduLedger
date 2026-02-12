@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server"
-import { requireRole } from "@/lib/requireRole"
+import { requireRole } from "@/lib/authz"
 
 export async function GET() {
   try {

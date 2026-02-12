@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -13,20 +7,156 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model User {
+  id                Int             @id @default(autoincrement())
+  name              String
+  email             String          @unique
+  password          String
+  role              Role            @default(CIVITAS)
+  civitasType       CivitasType?
+  isActive          Boolean         @default(true)
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  requestsApproved  BudgetRequest[] @relation("RequestApprovedBy")
+  requestsSubmitted BudgetRequest[] @relation("RequestSubmittedBy")
+  ledgerRecorded    LedgerEntry[]   @relation("LedgerRecordedBy")
+  rkabsApproved     Rkab[]          @relation("RkabApprovedBy")
+  rkabsCreated      Rkab[]          @relation("RkabCreatedBy")
+}
+
+model Category {
+  id             Int             @id @default(autoincrement())
+  name           String
+  type           CategoryType
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  budgetRequests BudgetRequest[]
+  ledgerEntries  LedgerEntry[]
+}
+
+model FundingSource {
+  id            Int           @id @default(autoincrement())
+  name          String
+  agency        String?
+  createdAt     DateTime      @default(now())
+  ledgerEntries LedgerEntry[]
+}
+
+model BudgetRequest {
+  id              Int                 @id @default(autoincrement())
+  title           String
+  description     String?
+  amountRequested Int
+  neededBy        DateTime?
+  categoryId      Int
+  status          BudgetRequestStatus @default(SUBMITTED)
+  submittedById   Int
+  submittedAt     DateTime?
+  approvedById    Int?
+  approvedAt      DateTime?
+  approvalNote    String?
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+  approvedBy      User?               @relation("RequestApprovedBy", fields: [approvedById], references: [id])
+  category        Category            @relation(fields: [categoryId], references: [id])
+  submittedBy     User                @relation("RequestSubmittedBy", fields: [submittedById], references: [id])
+  rkabItem        RkabItem?
+
+  @@index([status])
+  @@index([categoryId])
+  @@index([submittedById])
+  @@index([approvedById])
+}
+
+model Rkab {
+  id           Int        @id @default(autoincrement())
+  code         String     @unique
+  fiscalYear   Int
+  status       RkabStatus @default(DRAFT)
+  createdById  Int
+  submittedAt  DateTime?
+  approvedById Int?
+  approvedAt   DateTime?
+  approvalNote String?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  approvedBy   User?      @relation("RkabApprovedBy", fields: [approvedById], references: [id])
+  createdBy    User       @relation("RkabCreatedBy", fields: [createdById], references: [id])
+  items        RkabItem[]
+
+  @@index([fiscalYear])
+  @@index([status])
+  @@index([createdById])
+  @@index([approvedById])
+}
+
+model RkabItem {
+  id              Int           @id @default(autoincrement())
+  rkabId          Int
+  budgetRequestId Int           @unique
+  amountAllocated Int
+  usedAmount      Int           @default(0)
+  note            String?
+  createdAt       DateTime      @default(now())
+  expenses        LedgerEntry[]
+  budgetRequest   BudgetRequest @relation(fields: [budgetRequestId], references: [id])
+  rkab            Rkab          @relation(fields: [rkabId], references: [id])
+
+  @@index([rkabId])
+}
+
+model LedgerEntry {
+  id              Int            @id @default(autoincrement())
+  type            CategoryType
+  amount          Int
+  date            DateTime
+  description     String?
+  categoryId      Int
+  fundingSourceId Int?
+  rkabItemId      Int?
+  recordedById    Int
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  category        Category       @relation(fields: [categoryId], references: [id])
+  fundingSource   FundingSource? @relation(fields: [fundingSourceId], references: [id])
+  recordedBy      User           @relation("LedgerRecordedBy", fields: [recordedById], references: [id])
+  rkabItem        RkabItem?      @relation(fields: [rkabItemId], references: [id])
+
+  @@index([date])
+  @@index([type])
+  @@index([categoryId])
+  @@index([fundingSourceId])
+  @@index([rkabItemId])
+  @@index([recordedById])
+}
+
 enum Role {
   CIVITAS
   BENDAHARA
   KEPSEK
 }
 
-model User {
-  id        String   @id @default(cuid())
-  name      String
-  email     String   @unique
-  password  String   // hashed
-  role      Role     @default(CIVITAS)
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+enum CivitasType {
+  PEGAWAI
+  GURU
 }
 
+enum CategoryType {
+  INCOME
+  EXPENSE
+}
+
+enum BudgetRequestStatus {
+  DRAFT
+  SUBMITTED
+  APPROVED
+  REJECTED
+  CANCELLED
+}
+
+enum RkabStatus {
+  DRAFT
+  SUBMITTED
+  APPROVED
+  REJECTED
+}
