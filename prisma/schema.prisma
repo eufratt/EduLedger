@@ -22,6 +22,7 @@ model User {
   ledgerRecorded    LedgerEntry[]   @relation("LedgerRecordedBy")
   rkabsApproved     Rkab[]          @relation("RkabApprovedBy")
   rkabsCreated      Rkab[]          @relation("RkabCreatedBy")
+  requestsDisbursed BudgetRequest[] @relation("RequestDisbursedBy")
 }
 
 model Category {
@@ -43,27 +44,32 @@ model FundingSource {
 }
 
 model BudgetRequest {
-  id              Int                 @id @default(autoincrement())
+  id              Int       @id @default(autoincrement())
   title           String
   description     String?
   amountRequested Int
   neededBy        DateTime?
 
-  categoryId      Int?        // ✅ jadi opsional
-  category        Category?    @relation(fields: [categoryId], references: [id])
+  categoryId Int? // ✅ jadi opsional
+  category   Category? @relation(fields: [categoryId], references: [id])
 
-  status          BudgetRequestStatus @default(SUBMITTED)
-  submittedById   Int
-  submittedAt     DateTime?
-  approvedById    Int?
-  approvedAt      DateTime?
-  approvalNote    String?
-  createdAt       DateTime            @default(now())
-  updatedAt       DateTime            @updatedAt
+  status        BudgetRequestStatus @default(SUBMITTED)
+  submittedById Int
+  submittedAt   DateTime?
+  approvedById  Int?
+  approvedAt    DateTime?
+  approvalNote  String?
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
 
-  approvedBy      User? @relation("RequestApprovedBy", fields: [approvedById], references: [id])
-  submittedBy     User  @relation("RequestSubmittedBy", fields: [submittedById], references: [id])
-  rkabItem        RkabItem?
+  approvedBy  User?     @relation("RequestApprovedBy", fields: [approvedById], references: [id])
+  submittedBy User      @relation("RequestSubmittedBy", fields: [submittedById], references: [id])
+  rkabItem    RkabItem?
+
+  disbursedAt   DateTime?
+  disbursedById Int?
+  disbursedBy   User?     @relation("RequestDisbursedBy", fields: [disbursedById], references: [id])
+
   proofs RequestProof[]
 
   @@index([status])
@@ -155,6 +161,8 @@ enum BudgetRequestStatus {
   SUBMITTED
   APPROVED
   REJECTED
+  DISBURSED // Dicairkan oleh bendahara
+  COMPLETED // (opsional) setelah bukti diupload
   CANCELLED
 }
 
@@ -165,17 +173,16 @@ enum RkabStatus {
   REJECTED
 }
 
-
 model RequestProof {
-  id         Int          @id @default(autoincrement())
+  id         Int      @id @default(autoincrement())
   requestId  Int
   fileUrl    String
   fileName   String
   mimeType   String
   size       Int
-  uploadedAt DateTime     @default(now())
+  uploadedAt DateTime @default(now())
 
-  request    BudgetRequest @relation(fields: [requestId], references: [id])
+  request BudgetRequest @relation(fields: [requestId], references: [id])
 
   @@index([requestId])
 }

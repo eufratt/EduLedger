@@ -8,8 +8,8 @@ function toLabel(s: BudgetRequestStatus) {
   if (s === BudgetRequestStatus.SUBMITTED) return "Menunggu"
   if (s === BudgetRequestStatus.APPROVED) return "Disetujui"
   if (s === BudgetRequestStatus.REJECTED) return "Ditolak"
-  if (s === BudgetRequestStatus.CANCELLED) return "Dibatalkan"
-  if (s === BudgetRequestStatus.DRAFT) return "Draft"
+  if (s === BudgetRequestStatus.DISBURSED) return "Dicairkan"
+  if (s === BudgetRequestStatus.COMPLETED) return "Selesai"
   return s
 }
 
@@ -65,8 +65,8 @@ export async function GET(
     at: string
     note?: string | null
   }> = [
-    { key: "created", title: "Pengajuan Dibuat", at: createdDate.toISOString() },
-  ]
+      { key: "created", title: "Pengajuan Dibuat", at: createdDate.toISOString() },
+    ]
 
   if (r.status === BudgetRequestStatus.APPROVED && r.approvedAt) {
     timeline.push({

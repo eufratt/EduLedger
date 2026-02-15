@@ -16,15 +16,15 @@ export async function GET() {
   const rows = await prisma.budgetRequest.findMany({
     where: {
       submittedById: userId,
-      status: BudgetRequestStatus.APPROVED, // ✅ eligible
+      status: BudgetRequestStatus.DISBURSED, // ✅ hanya yang sudah dicairkan
     },
-    orderBy: { approvedAt: "desc" },
+    orderBy: { disbursedAt: "desc" },
     select: {
       id: true,
       title: true,
       amountRequested: true,
       status: true,
-      approvedAt: true,
+      disbursedAt: true,
       proofs: { select: { id: true }, take: 1 },
     },
   })
@@ -34,8 +34,8 @@ export async function GET() {
       id: r.id,
       judul: r.title,
       jumlah: r.amountRequested,
-      status: r.status,
-      eligibleAt: r.approvedAt,
+      status: r.status, // DISBURSED
+      dicairkanAt: r.disbursedAt,
       hasProof: r.proofs.length > 0,
     })),
   })
