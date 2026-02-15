@@ -48,7 +48,10 @@ model BudgetRequest {
   description     String?
   amountRequested Int
   neededBy        DateTime?
-  categoryId      Int
+
+  categoryId      Int?        // ✅ jadi opsional
+  category        Category?    @relation(fields: [categoryId], references: [id])
+
   status          BudgetRequestStatus @default(SUBMITTED)
   submittedById   Int
   submittedAt     DateTime?
@@ -57,15 +60,16 @@ model BudgetRequest {
   approvalNote    String?
   createdAt       DateTime            @default(now())
   updatedAt       DateTime            @updatedAt
-  approvedBy      User?               @relation("RequestApprovedBy", fields: [approvedById], references: [id])
-  category        Category            @relation(fields: [categoryId], references: [id])
-  submittedBy     User                @relation("RequestSubmittedBy", fields: [submittedById], references: [id])
+
+  approvedBy      User? @relation("RequestApprovedBy", fields: [approvedById], references: [id])
+  submittedBy     User  @relation("RequestSubmittedBy", fields: [submittedById], references: [id])
   rkabItem        RkabItem?
+  proofs RequestProof[]
 
   @@index([status])
-  @@index([categoryId])
   @@index([submittedById])
   @@index([approvedById])
+  @@index([categoryId])
 }
 
 model Rkab {
@@ -159,4 +163,19 @@ enum RkabStatus {
   SUBMITTED
   APPROVED
   REJECTED
+}
+
+
+model RequestProof {
+  id         Int          @id @default(autoincrement())
+  requestId  Int
+  fileUrl    String
+  fileName   String
+  mimeType   String
+  size       Int
+  uploadedAt DateTime     @default(now())
+
+  request    BudgetRequest @relation(fields: [requestId], references: [id])
+
+  @@index([requestId])
 }
