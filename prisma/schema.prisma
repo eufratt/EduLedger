@@ -25,16 +25,6 @@ model User {
   requestsDisbursed BudgetRequest[] @relation("RequestDisbursedBy")
 }
 
-model Category {
-  id             Int             @id @default(autoincrement())
-  name           String
-  type           CategoryType
-  createdAt      DateTime        @default(now())
-  updatedAt      DateTime        @updatedAt
-  budgetRequests BudgetRequest[]
-  ledgerEntries  LedgerEntry[]
-}
-
 model FundingSource {
   id            Int           @id @default(autoincrement())
   name          String
@@ -49,9 +39,6 @@ model BudgetRequest {
   description     String?
   amountRequested Int
   neededBy        DateTime?
-
-  categoryId Int? // ✅ jadi opsional
-  category   Category? @relation(fields: [categoryId], references: [id])
 
   status        BudgetRequestStatus @default(SUBMITTED)
   submittedById Int
@@ -75,7 +62,6 @@ model BudgetRequest {
   @@index([status])
   @@index([submittedById])
   @@index([approvedById])
-  @@index([categoryId])
 }
 
 model Rkab {
@@ -116,25 +102,23 @@ model RkabItem {
 }
 
 model LedgerEntry {
-  id              Int            @id @default(autoincrement())
+  id              Int          @id @default(autoincrement())
   type            CategoryType
   amount          Int
   date            DateTime
   description     String?
-  categoryId      Int
   fundingSourceId Int?
   rkabItemId      Int?
   recordedById    Int
-  createdAt       DateTime       @default(now())
-  updatedAt       DateTime       @updatedAt
-  category        Category       @relation(fields: [categoryId], references: [id])
-  fundingSource   FundingSource? @relation(fields: [fundingSourceId], references: [id])
-  recordedBy      User           @relation("LedgerRecordedBy", fields: [recordedById], references: [id])
-  rkabItem        RkabItem?      @relation(fields: [rkabItemId], references: [id])
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  fundingSource FundingSource? @relation(fields: [fundingSourceId], references: [id])
+  recordedBy    User          @relation("LedgerRecordedBy", fields: [recordedById], references: [id])
+  rkabItem      RkabItem?     @relation(fields: [rkabItemId], references: [id])
 
   @@index([date])
   @@index([type])
-  @@index([categoryId])
   @@index([fundingSourceId])
   @@index([rkabItemId])
   @@index([recordedById])
