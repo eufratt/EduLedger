@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
 import { signOut } from "next-auth/react"
+import Link from "next/link"
 
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -227,14 +228,16 @@ export default function CivitasDashboardPage() {
         <h2 className="mt-6 text-base font-semibold text-foreground">Menu Utama</h2>
 
         <div className="mt-3 grid grid-cols-2 gap-4">
-          <Card className="rounded-2xl">
-            <CardContent className="flex flex-col items-center justify-center gap-3 p-6">
-              <div className="grid h-14 w-14 place-items-center rounded-2xl bg-blue-600 text-white">
-                <FileText className="h-7 w-7" />
-              </div>
-              <div className="text-sm font-medium">Ajukan Dana</div>
-            </CardContent>
-          </Card>
+          <Link href="/civitas/ajukan-dana" className="block">
+            <Card className="rounded-2xl transition hover:shadow-md active:scale-[0.99]">
+              <CardContent className="flex flex-col items-center justify-center gap-3 p-6">
+                <div className="grid h-14 w-14 place-items-center rounded-2xl bg-blue-600 text-white">
+                  <FileText className="h-7 w-7" />
+                </div>
+                <div className="text-sm font-medium">Ajukan Dana</div>
+              </CardContent>
+            </Card>
+          </Link>
 
           <Card className="rounded-2xl">
             <CardContent className="flex flex-col items-center justify-center gap-3 p-6">
