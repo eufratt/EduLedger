@@ -23,6 +23,7 @@ model User {
   rkabsApproved     Rkab[]          @relation("RkabApprovedBy")
   rkabsCreated      Rkab[]          @relation("RkabCreatedBy")
   requestsDisbursed BudgetRequest[] @relation("RequestDisbursedBy")
+  reportsCreated    FinancialReport[] @relation("FinancialReportCreatedBy")
 }
 
 model FundingSource {
@@ -169,4 +170,31 @@ model RequestProof {
   request BudgetRequest @relation(fields: [requestId], references: [id])
 
   @@index([requestId])
+}
+
+
+enum ReportType {
+  INCOME
+  EXPENSE
+  BALANCE
+}
+
+model FinancialReport {
+  id         Int        @id @default(autoincrement())
+  type       ReportType
+  period     String     // "YYYY-MM"
+  title      String
+  fileUrl    String
+  fileName   String
+  mimeType   String     @default("application/pdf")
+  size       Int        // bytes
+  summary    Json?      // snapshot ringkasan untuk preview (biar cepat)
+  createdById Int
+  createdAt  DateTime   @default(now())
+
+  createdBy User @relation("FinancialReportCreatedBy", fields: [createdById], references: [id])
+  
+  @@unique([type, period])
+  @@index([period])
+  @@index([type])
 }
