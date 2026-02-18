@@ -97,6 +97,7 @@ export async function GET(
       deskripsi: r.description ?? "",
       neededBy: r.neededBy ? r.neededBy.toISOString() : null,
       timeline,
+      disetujuiAt: r.approvedAt ? r.approvedAt.toISOString() : null,
     },
   })
 }

@@ -6,16 +6,6 @@ import { BudgetRequestStatus } from "@prisma/client"
 import { randomUUID } from "crypto"
 import path from "path"
 import fs from "fs/promises"
-function toLabel(s: BudgetRequestStatus) {
-  if (s === BudgetRequestStatus.SUBMITTED) return "Menunggu"
-  if (s === BudgetRequestStatus.APPROVED) return "Disetujui"
-  if (s === BudgetRequestStatus.REJECTED) return "Ditolak"
-  if (s === BudgetRequestStatus.DISBURSED) return "Dicairkan"
-  if (s === BudgetRequestStatus.COMPLETED) return "Selesai"
-  if (s === BudgetRequestStatus.CANCELLED) return "Dibatalkan"
-  if (s === BudgetRequestStatus.DRAFT) return "Draft"
-  return s
-}
 
 export const runtime = "nodejs"
 
