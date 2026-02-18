@@ -171,6 +171,7 @@ export async function GET(req: Request) {
         status: true,
         createdAt: true,
         submittedAt: true,
+        disbursedAt: true,
       },
     }),
   ])
@@ -182,7 +183,7 @@ export async function GET(req: Request) {
       jumlah: r.amountRequested,
       status: r.status,
       statusLabel: toLabel(r.status),
-      tanggal: r.submittedAt ?? r.createdAt,
+      tanggal: r.disbursedAt ?? r.createdAt,
     })),
     meta: { page, limit, total },
   })

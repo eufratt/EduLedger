@@ -239,14 +239,17 @@ export default function CivitasDashboardPage() {
             </Card>
           </Link>
 
-          <Card className="rounded-2xl">
-            <CardContent className="flex flex-col items-center justify-center gap-3 p-6">
-              <div className="grid h-14 w-14 place-items-center rounded-2xl bg-green-600 text-white">
-                <Upload className="h-7 w-7" />
-              </div>
-              <div className="text-sm font-medium">Upload Bukti</div>
-            </CardContent>
-          </Card>
+          <Link href="/civitas/upload-bukti" className="block">
+            <Card className="rounded-2xl">
+              <CardContent className="flex flex-col items-center justify-center gap-3 p-6">
+                <div className="grid h-14 w-14 place-items-center rounded-2xl bg-green-600 text-white">
+                  <Upload className="h-7 w-7" />
+                </div>
+                <div className="text-sm font-medium">Upload Bukti</div>
+              </CardContent>
+            </Card>
+          </Link>
+
 
           <Card className="rounded-2xl">
             <CardContent className="flex flex-col items-center justify-center gap-3 p-6">
