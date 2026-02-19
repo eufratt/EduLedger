@@ -68,23 +68,23 @@ export async function GET(
       { key: "created", title: "Pengajuan Dibuat", at: createdDate.toISOString() },
     ]
 
-  if (r.status === BudgetRequestStatus.APPROVED && r.approvedAt) {
-    timeline.push({
-      key: "approved",
-      title: "Disetujui",
-      at: r.approvedAt.toISOString(),
-      note: r.approvalNote ?? null,
-    })
-  }
+  if (r.approvedAt) {
+  timeline.push({
+    key: "approved",
+    title: "Disetujui",
+    at: r.approvedAt.toISOString(),
+    note: r.approvalNote ?? null,
+  })
+}
 
-  if (r.status === BudgetRequestStatus.REJECTED && r.approvedAt) {
-    timeline.push({
-      key: "rejected",
-      title: "Ditolak",
-      at: r.approvedAt.toISOString(),
-      note: r.approvalNote ?? null,
-    })
-  }
+// kalau suatu saat kamu punya disbursedAt, tambahin ini juga:
+if ((r as any).disbursedAt) {
+  timeline.push({
+    key: "disbursed",
+    title: "Dicairkan",
+    at: (r as any).disbursedAt.toISOString(),
+  })
+}
 
   return NextResponse.json({
     data: {

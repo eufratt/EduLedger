@@ -250,15 +250,17 @@ export default function CivitasDashboardPage() {
             </Card>
           </Link>
 
+          <Link href="/civitas/riwayat" className="block">
+            <Card className="rounded-2xl">
+              <CardContent className="flex flex-col items-center justify-center gap-3 p-6">
+                <div className="grid h-14 w-14 place-items-center rounded-2xl bg-purple-600 text-white">
+                  <History className="h-7 w-7" />
+                </div>
+                <div className="text-sm font-medium">Riwayat Pengajuan</div>
+              </CardContent>
+            </Card>
+          </Link>
 
-          <Card className="rounded-2xl">
-            <CardContent className="flex flex-col items-center justify-center gap-3 p-6">
-              <div className="grid h-14 w-14 place-items-center rounded-2xl bg-purple-600 text-white">
-                <History className="h-7 w-7" />
-              </div>
-              <div className="text-sm font-medium">Riwayat Pengajuan</div>
-            </CardContent>
-          </Card>
 
           <Card className="rounded-2xl">
             <CardContent className="flex flex-col items-center justify-center gap-3 p-6">
