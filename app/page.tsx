@@ -12,6 +12,5 @@ export default async function Home() {
   if (role === "BENDAHARA") redirect("/bendahara")
   if (role === "KEPSEK") redirect("/kepsek")
 
-  // default
-  redirect("/civitas")
+  if (role === "CIVITAS") redirect("/civitas")
 }

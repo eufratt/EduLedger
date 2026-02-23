@@ -1,5 +1,5 @@
 "use client"
-
+import { getSession } from "next-auth/react"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { signIn } from "next-auth/react"
@@ -24,7 +24,6 @@ export default function LoginPage() {
       redirect: false,
       email,
       password,
-      callbackUrl: "/civitas", // ganti kalau mau dynamic by role nanti
     })
 
     setLoading(false)
@@ -33,14 +32,21 @@ export default function LoginPage() {
       setError("Login gagal. Coba lagi.")
       return
     }
-
     if (res.error) {
       setError("Email/Password salah atau akun tidak aktif.")
       return
     }
 
-    // redirect manual karena redirect:false
-    router.replace(res.url ?? "/civitas")
+    const s = await getSession()
+    const role = (s?.user as any)?.role as string | undefined
+
+    const target =
+      role === "KEPSEK" ? "/kepsek" :
+        role === "BENDAHARA" ? "/bendahara" :
+          "/civitas"
+
+    router.replace(target)
+    router.refresh()
   }
 
   return (

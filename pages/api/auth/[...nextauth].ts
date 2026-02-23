@@ -23,7 +23,6 @@ export const authOptions: NextAuthOptions = {
         const ok = await bcrypt.compare(password, user.password)
         if (!ok) return null
 
-        // PENTING: NextAuth akan taruh ini ke token.sub
         return {
           id: user.id,
           name: user.name,
@@ -33,22 +32,43 @@ export const authOptions: NextAuthOptions = {
       },
     }),
   ],
+
   callbacks: {
     async jwt({ token, user }) {
+      // saat login pertama, user ada
       if (user) {
         token.id = (user as any).id
         token.role = (user as any).role
+        token.name = (user as any).name
+        token.email = (user as any).email
       }
       return token
     },
+
     async session({ session, token }) {
       if (session.user) {
-        ; (session.user as any).id = (token as any).id ?? null
-          ; (session.user as any).role = (token as any).role ?? null
+        ;(session.user as any).id = (token as any).id
+        ;(session.user as any).role = (token as any).role
       }
       return session
     },
+
+    async redirect({ url, baseUrl }) {
+      // ✅ jangan pernah balik ke /403 setelah login
+      if (url === `${baseUrl}/403` || url.startsWith(`${baseUrl}/403`)) {
+        return `${baseUrl}/kepsek`
+      }
+
+      // relative path aman
+      if (url.startsWith("/")) return `${baseUrl}${url}`
+
+      // allow same-origin only
+      if (url.startsWith(baseUrl)) return url
+
+      return baseUrl
+    },
   },
+
   pages: { signIn: "/login" },
 }
 

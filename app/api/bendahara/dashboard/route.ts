@@ -8,17 +8,29 @@ function forbidden() {
   return NextResponse.json({ error: "Forbidden" }, { status: 403 })
 }
 
-export async function GET() {
+function unauthorized() {
+  return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+}
+
+function parseIntSafe(v: string | null, def: number) {
+  const n = Number(v)
+  return Number.isFinite(n) && n > 0 ? Math.floor(n) : def
+}
+
+export async function GET(req: Request) {
   const session = await getServerSession(authOptions)
-  if (!session?.user) return forbidden()
+  if (!session?.user) return unauthorized()
   if (session.user.role !== Role.BENDAHARA) return forbidden()
 
-  // 12 bulan terakhir (untuk masuk/keluar)
+  const url = new URL(req.url)
+  const limitActivities = parseIntSafe(url.searchParams.get("limitActivities"), 5)
+
+  // 12 bulan terakhir
   const end = new Date()
   const start12M = new Date(end)
   start12M.setUTCFullYear(end.getUTCFullYear() - 1)
 
-  // Saldo sepanjang waktu
+  // saldo all-time
   const incomeAllQ = prisma.ledgerEntry.aggregate({
     where: { type: CategoryType.INCOME },
     _sum: { amount: true },
@@ -28,7 +40,7 @@ export async function GET() {
     _sum: { amount: true },
   })
 
-  // Masuk/Keluar 12 bulan terakhir
+  // masuk/keluar 12 bulan
   const income12MQ = prisma.ledgerEntry.aggregate({
     where: { type: CategoryType.INCOME, date: { gte: start12M, lt: end } },
     _sum: { amount: true },
@@ -38,7 +50,7 @@ export async function GET() {
     _sum: { amount: true },
   })
 
-  // Actions (global)
+  // tindakan
   const readyDisburseQ = prisma.budgetRequest.aggregate({
     where: { status: BudgetRequestStatus.APPROVED },
     _count: { _all: true },
@@ -46,13 +58,24 @@ export async function GET() {
   })
 
   const missingProofQ = prisma.budgetRequest.count({
-    where: {
-      status: BudgetRequestStatus.DISBURSED,
-      proofs: { none: {} },
+    where: { status: BudgetRequestStatus.DISBURSED, proofs: { none: {} } },
+  })
+
+  // aktivitas terbaru (ambil dari BudgetRequest biar relevan)
+  const activityQ = prisma.budgetRequest.findMany({
+    orderBy: { createdAt: "desc" },
+    take: Math.min(limitActivities, 20),
+    select: {
+      id: true,
+      title: true,
+      amountRequested: true,
+      status: true,
+      createdAt: true,
+      submittedBy: { select: { name: true } },
     },
   })
 
-  const [incomeAll, expenseAll, income12M, expense12M, readyAgg, missingProofCount] =
+  const [incomeAll, expenseAll, income12M, expense12M, readyAgg, missingProofCount, activities] =
     await Promise.all([
       incomeAllQ,
       expenseAllQ,
@@ -60,46 +83,41 @@ export async function GET() {
       expense12MQ,
       readyDisburseQ,
       missingProofQ,
+      activityQ,
     ])
 
   const totalIncome = Number(incomeAll._sum.amount ?? 0)
   const totalExpense = Number(expenseAll._sum.amount ?? 0)
-  const totalSaldo = totalIncome - totalExpense
 
-  const danaMasuk = Number(income12M._sum.amount ?? 0)
-  const danaKeluar = Number(expense12M._sum.amount ?? 0)
+  const totalSaldo = totalIncome - totalExpense
+  const danaMasuk12M = Number(income12M._sum.amount ?? 0)
+  const danaKeluar12M = Number(expense12M._sum.amount ?? 0)
 
   const readyCount = Number(readyAgg._count._all ?? 0)
   const readyTotal = Number(readyAgg._sum.amountRequested ?? 0)
 
-  // belum ada model Notification, jadi badge dihitung dari tindakan
-  const notifCount = readyCount + missingProofCount
+  const unreadNotif = readyCount + missingProofCount
 
   return NextResponse.json({
-    period: {
-      rolling12m: { start: start12M.toISOString(), end: end.toISOString() },
-    },
-    header: {
-      greetingName: session.user.name ?? "Bendahara",
-      tagline: "Kelola keuangan sekolah dengan efisien",
-      notifications: { unreadCount: notifCount },
+    user: {
+      name: session.user.name ?? "Bendahara",
     },
     summary: {
-      totalSaldo, // sepanjang waktu
-      danaMasuk,  // 12 bulan terakhir
-      danaKeluar, // 12 bulan terakhir
+      totalSaldo,
+      danaMasuk12M,
+      danaKeluar12M,
+      siapCairCount: readyCount,
+      siapCairTotal: readyTotal,
+      buktiKurangCount: missingProofCount,
+      unreadNotif,
     },
-    actionsRequired: [
-      {
-        key: "ready_disbursement",
-        title: `${readyCount} Pengajuan Siap Dicairkan`,
-        subtitle: `Total: Rp ${readyTotal}`,
-      },
-      {
-        key: "missing_proof",
-        title: `${missingProofCount} Pengajuan Belum Ada Bukti`,
-        subtitle: "Cek & minta upload bukti",
-      },
-    ],
+    aktivitasTerbaru: activities.map((a) => ({
+      id: a.id,
+      judul: a.title,
+      jumlah: a.amountRequested,
+      status: a.status,
+      createdAt: a.createdAt.toISOString(),
+      oleh: a.submittedBy?.name ?? "-",
+    })),
   })
 }
