@@ -245,7 +245,7 @@ export default function BendaharaDashboardPage() {
           <div className="mb-3 text-slate-700 font-semibold">Menu Utama</div>
           <div className="grid grid-cols-2 gap-4">
             <MenuTile
-              href="/bendahara/penerimaan"
+              href="/bendahara/penerimaan-dana"
               iconBoxClass="bg-emerald-500 text-white"
               icon={<DollarSign className="h-7 w-7" />}
               label="Penerimaan Dana"
