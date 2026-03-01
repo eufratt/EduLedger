@@ -1,16 +1,10 @@
-// app/api/requests/route.ts
 import { NextResponse } from "next/server"
 import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/pages/api/auth/[...nextauth]"
 import { prisma } from "@/lib/prisma"
 import { BudgetRequestStatus } from "@prisma/client"
+import { CreateRequestSchema } from "@/schemas/requests.schema"
 
-type CreateRequestBody = {
-  title?: string
-  description?: string
-  amountRequested?: number
-  neededBy?: string // "YYYY-MM-DD"
-}
 
 function badRequest(message: string) {
   return NextResponse.json({ error: message }, { status: 400 })
@@ -49,6 +43,7 @@ function toLabel(s: BudgetRequestStatus) {
   return s
 }
 
+
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions)
   if (!session) return NextResponse.json({ message: "Unauthorized" }, { status: 401 })
@@ -62,39 +57,25 @@ export async function POST(req: Request) {
   }
 
   const json = await req.json().catch(() => null)
-  const body = json as CreateRequestBody | null
-  if (!body) return badRequest("Body harus JSON")
+  if (!json) return badRequest("Body harus JSON")
 
-  const title = (body.title ?? "").trim()
-  const description = (body.description ?? "").trim()
-  const amountRequested = Number(body.amountRequested)
+  const result = CreateRequestSchema.safeParse(json)
+  if (!result.success) {
+    const error = result.error.issues[0]?.message || "Input tidak valid"
+    return badRequest(error)
+  }
 
-  if (title.length < 3) return badRequest("Judul minimal 3 karakter")
-  if (description.length > 0 && description.length < 10) {
-    return badRequest("Deskripsi minimal 10 karakter (atau kosongin)")
-  }
-  if (!Number.isFinite(amountRequested) || amountRequested <= 0) {
-    return badRequest("Jumlah dana harus > 0")
-  }
+  const { title, description, amountRequested, neededBy } = result.data
 
   let neededByDate: Date | null = null
-  if (body.neededBy) {
-    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(body.neededBy)
-    if (!m) return badRequest("Format tanggal harus YYYY-MM-DD")
-    const y = Number(m[1])
-    const mo = Number(m[2])
-    const d = Number(m[3])
-    neededByDate = new Date(Date.UTC(y, mo - 1, d, 0, 0, 0))
-
-    const now = new Date()
-    const todayUTC = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()))
-    if (neededByDate < todayUTC) return badRequest("Tanggal dibutuhkan tidak boleh di masa lalu")
+  if (neededBy) {
+    neededByDate = new Date(neededBy)
   }
 
   const created = await prisma.budgetRequest.create({
     data: {
       title,
-      description: description.length ? description : null,
+      description: description && description.trim().length > 0 ? description : null,
       amountRequested,
       neededBy: neededByDate,
       status: BudgetRequestStatus.SUBMITTED,

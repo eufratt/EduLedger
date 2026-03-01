@@ -13,10 +13,16 @@ function badRequest(message: string) {
 }
 
 const CreateIncomeSchema = z.object({
-  amount: z.number().int().positive(),
-  date: z.string().datetime(),
-  description: z.string().trim().min(1).max(200).optional(),
-  fundingSourceId: z.number().int().positive().optional(),
+  amount: z.number({
+    message: "Jumlah dana harus berupa angka",
+  }).int().positive("Jumlah dana harus berupa angka positif"),
+  date: z.string({
+    message: "Tanggal penerimaan wajib diisi",
+  }).datetime({ message: "Format tanggal tidak valid" }),
+  description: z.string().trim().max(200, "Deskripsi maksimal 200 karakter").optional(),
+  fundingSourceId: z.number({
+    message: "ID sumber dana tidak valid",
+  }).int().positive().optional(),
 })
 
 type IncomeItem = Prisma.LedgerEntryGetPayload<{
@@ -82,7 +88,11 @@ export async function POST(req: Request) {
 
   const json = await req.json().catch(() => null)
   const parsed = CreateIncomeSchema.safeParse(json)
-  if (!parsed.success) return badRequest("Invalid body")
+
+  if (!parsed.success) {
+    const firstError = parsed.error.issues[0]?.message || "Invalid body"
+    return badRequest(firstError)
+  }
 
   if (parsed.data.fundingSourceId) {
     const fs = await prisma.fundingSource.findUnique({

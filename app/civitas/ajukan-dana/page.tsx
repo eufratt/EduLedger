@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, type FormEvent } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { ArrowLeft, FileText, DollarSign, CalendarDays, Send, CheckCircle2 } from "lucide-react"
@@ -15,19 +15,8 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
+import { CreateRequestSchema } from "@/schemas/requests.schema"
 
-type CreateResponse = {
-    data: {
-        id: number
-        title: string
-        description: string | null
-        amountRequested: number
-        neededBy: string | null
-        status: string
-        submittedAt: string | null
-        createdAt: string
-    }
-}
 
 function formatIDRInput(value: string) {
     const digits = value.replace(/[^\d]/g, "")
@@ -37,11 +26,12 @@ function formatIDRInput(value: string) {
     return { raw, display }
 }
 
-async function readApiError(res: Response) {
+async function readApiError(res: Response): Promise<string> {
     const j = await res.json().catch(() => null)
-    // endpoint kamu kadang pakai "message", kadang "error"
-    return j?.error ?? j?.message ?? `HTTP ${res.status}`
+    const msg = j?.error ?? j?.message ?? `HTTP ${res.status}`
+    return String(msg)
 }
+
 
 export default function AjukanDanaPage() {
     const router = useRouter()
@@ -62,15 +52,22 @@ export default function AjukanDanaPage() {
         return () => clearTimeout(t)
     }, [openSuccess, router])
 
-    async function onSubmit(e: React.FormEvent) {
+    async function onSubmit(e: FormEvent) {
         e.preventDefault()
         setError(null)
 
-        // Validasi sesuai endpoint kamu
-        if (title.trim().length < 3) return setError("Judul minimal 3 karakter.")
-        if (description.trim().length < 10) return setError("Deskripsi minimal 10 karakter.")
-        if (!amountRaw || amountRaw <= 0) return setError("Jumlah dana harus > 0.")
-        if (!neededBy) return setError("Tanggal dibutuhkan wajib diisi.")
+        // Validasi menggunakan Zod schema
+        const result = CreateRequestSchema.safeParse({
+            title: title.trim(),
+            description: description.trim(),
+            amountRequested: amountRaw,
+            neededBy,
+        })
+
+        if (!result.success) {
+            setError(result.error.issues[0]?.message || "Input tidak valid.")
+            return
+        }
 
         setLoading(true)
         try {
@@ -78,12 +75,7 @@ export default function AjukanDanaPage() {
                 method: "POST",
                 credentials: "include",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    title: title.trim(),
-                    description: description.trim(),
-                    amountRequested: amountRaw,
-                    neededBy, // backend kamu sudah validasi YYYY-MM-DD + ga boleh masa lalu
-                }),
+                body: JSON.stringify(result.data),
             })
 
             if (res.status === 401) {
@@ -111,8 +103,8 @@ export default function AjukanDanaPage() {
             setTimeout(() => {
                 router.replace("/civitas")
             }, 1200)
-        } catch (e: any) {
-            setError(e?.message ?? "Gagal mengirim pengajuan.")
+        } catch (err: any) {
+            setError(err?.message ?? "Gagal mengirim pengajuan.")
         } finally {
             setLoading(false)
         }
