@@ -154,7 +154,7 @@ export default function CivitasDashboardPage() {
   return (
     <div className="min-h-screen bg-background">
       {/* Topbar */}
-      <header className="sticky top-0 z-50 h-14 bg-primary text-primary-foreground shadow">
+      <header className="sticky top-0 z-50 h-14 bg-blue-600 text-white shadow">
         <div className="mx-auto flex h-14 max-w-md items-center justify-between px-4">
           <h1 className="text-lg font-semibold">Dashboard Civitas</h1>
 
