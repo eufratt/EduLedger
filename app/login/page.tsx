@@ -7,6 +7,14 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
 import { LogIn } from "lucide-react"
+import { z } from "zod"
+
+const loginSchema = z.object({
+  email: z.string().trim().min(1, "Email wajib diisi").email("Format email tidak valid"),
+  password: z.string().min(1, "Password wajib diisi").min(6, "Password minimal 6 karakter"),
+})
+
+type LoginValues = z.infer<typeof loginSchema>
 
 export default function LoginPage() {
   const router = useRouter()
@@ -18,12 +26,17 @@ export default function LoginPage() {
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError(null)
+    const parsed = loginSchema.safeParse({ email, password })
+    if (!parsed.success) {
+      setError(parsed.error.issues[0]?.message ?? "Input tidak valid")
+      return
+    }
     setLoading(true)
 
     const res = await signIn("credentials", {
       redirect: false,
-      email,
-      password,
+      email: parsed.data.email,
+      password: parsed.data.password,
     })
 
     setLoading(false)
@@ -48,7 +61,8 @@ export default function LoginPage() {
     router.replace(target)
     router.refresh()
   }
-
+  const emailTrimmed = email.trim()
+  const passwordTrimmed = password
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#1E63F3] via-[#1B5BEA] to-[#1446C7]">
       <div className="mx-auto flex min-h-screen max-w-md flex-col px-6">
@@ -80,13 +94,14 @@ export default function LoginPage() {
 
             <form onSubmit={onSubmit} className="space-y-5">
               <div className="space-y-2">
-                <label className="text-sm font-medium text-foreground">Email / Username</label>
+                <label className="text-sm font-medium text-foreground">Email</label>
                 <Input
+                  type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="Masukkan email"
                   className="h-12 rounded-xl"
-                  autoComplete="username"
+                  autoComplete="email"
                 />
               </div>
 
@@ -105,7 +120,7 @@ export default function LoginPage() {
               <Button
                 type="submit"
                 className="h-12 w-full rounded-xl bg-[#1E63F3] text-white hover:bg-[#1957D6]"
-                disabled={loading || !email || !password}
+                disabled={loading || !emailTrimmed || !passwordTrimmed}
               >
                 {loading ? "Memproses..." : "Masuk"}
               </Button>
@@ -115,7 +130,7 @@ export default function LoginPage() {
 
         {/* Footer */}
         <div className="mt-auto pb-10 pt-12 text-center text-sm text-white/90">
-          © 2025 EduLedger
+          © 2026 EduLedger
         </div>
       </div>
     </div>
