@@ -5,21 +5,17 @@ import type { NextRequest } from "next/server"
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl
 
-  const isProtected =
-    pathname.startsWith("/civitas") ||
-    pathname.startsWith("/bendahara") ||
-    pathname.startsWith("/kepsek")
-
-  if (!isProtected) return NextResponse.next()
-
   const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET })
+
+  // belum login
   if (!token) return NextResponse.redirect(new URL("/login", req.url))
 
-  const role = (token as any).role as string | undefined
+  const role = token.role as string | undefined
 
-  // ✅ kunci: role kadang belum kebaca pas redirect pertama setelah login
-  if (!role) return NextResponse.next()
+  // token ada tapi role hilang = session tidak valid
+  if (!role) return NextResponse.redirect(new URL("/login", req.url))
 
+  // RBAC
   if (pathname.startsWith("/bendahara") && role !== "BENDAHARA") {
     return NextResponse.redirect(new URL("/403", req.url))
   }
