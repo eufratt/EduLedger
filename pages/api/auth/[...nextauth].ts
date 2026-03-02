@@ -47,22 +47,19 @@ export const authOptions: NextAuthOptions = {
 
     async session({ session, token }) {
       if (session.user) {
-        ;(session.user as any).id = (token as any).id
-        ;(session.user as any).role = (token as any).role
+        ; (session.user as any).id = (token as any).id
+        ; (session.user as any).role = (token as any).role
       }
       return session
     },
 
     async redirect({ url, baseUrl }) {
-      // ✅ jangan pernah balik ke /403 setelah login
       if (url === `${baseUrl}/403` || url.startsWith(`${baseUrl}/403`)) {
         return `${baseUrl}/kepsek`
       }
 
-      // relative path aman
       if (url.startsWith("/")) return `${baseUrl}${url}`
 
-      // allow same-origin only
       if (url.startsWith(baseUrl)) return url
 
       return baseUrl

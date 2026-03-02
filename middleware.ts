@@ -29,7 +29,6 @@ export async function middleware(req: NextRequest) {
   if (pathname.startsWith("/civitas") && role !== "CIVITAS") {
     return NextResponse.redirect(new URL("/403", req.url))
   }
-  console.log("[MW]", pathname, "token?", !!token, "role=", (token as any)?.role)
 
   return NextResponse.next()
 }
