@@ -162,9 +162,6 @@ export async function POST(req: Request) {
     rkabItemId,
   } = parsed.data
 
-  // guard: income wajib punya fundingSourceId? (opsional, tapi biasanya iya)
-  // kalau mau wajib, uncomment:
-  // if (type === CategoryType.INCOME && !fundingSourceId) return badRequest("fundingSourceId wajib untuk INCOME")
 
   const recordedById = Number(session.user.id)
   if (!Number.isFinite(recordedById) || recordedById <= 0) {
