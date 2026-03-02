@@ -2,6 +2,12 @@ import NextAuth, { type NextAuthOptions } from "next-auth"
 import CredentialsProvider from "next-auth/providers/credentials"
 import bcrypt from "bcrypt"
 import { prisma } from "@/lib/prisma"
+import { z } from "zod"
+
+const credSchema = z.object({
+  email: z.string().trim().min(1).email(),
+  password: z.string().min(6),
+})
 
 export const authOptions: NextAuthOptions = {
   session: { strategy: "jwt" },
@@ -9,13 +15,14 @@ export const authOptions: NextAuthOptions = {
     CredentialsProvider({
       name: "credentials",
       credentials: {
-        email: { label: "Email", type: "text" },
+        email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
-        const email = credentials?.email
-        const password = credentials?.password
-        if (!email || !password) return null
+        const parsed = credSchema.safeParse(credentials)
+        if (!parsed.success) return null
+
+        const { email, password } = parsed.data
 
         const user = await prisma.user.findUnique({ where: { email } })
         if (!user || !user.isActive) return null
@@ -24,11 +31,11 @@ export const authOptions: NextAuthOptions = {
         if (!ok) return null
 
         return {
-          id: user.id,
+          id: String(user.id),
           name: user.name,
           email: user.email,
           role: user.role,
-        } as any
+        }
       },
     }),
   ],
@@ -37,31 +44,23 @@ export const authOptions: NextAuthOptions = {
     async jwt({ token, user }) {
       // saat login pertama, user ada
       if (user) {
-        token.id = (user as any).id
-        token.role = (user as any).role
-        token.name = (user as any).name
-        token.email = (user as any).email
+        token.id = (user).id
+        token.role = (user).role
       }
       return token
     },
 
     async session({ session, token }) {
-      if (session.user) {
-        ; (session.user as any).id = (token as any).id
-        ; (session.user as any).role = (token as any).role
+      if (session.user && token.id && token.role) {
+        session.user.id = token.id
+        session.user.role = token.role
       }
       return session
     },
 
     async redirect({ url, baseUrl }) {
-      if (url === `${baseUrl}/403` || url.startsWith(`${baseUrl}/403`)) {
-        return `${baseUrl}/kepsek`
-      }
-
       if (url.startsWith("/")) return `${baseUrl}${url}`
-
       if (url.startsWith(baseUrl)) return url
-
       return baseUrl
     },
   },
