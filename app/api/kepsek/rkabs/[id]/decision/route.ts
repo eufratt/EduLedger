@@ -63,7 +63,7 @@ export async function PATCH(req: Request, ctx: Ctx) {
     return badRequest("RKAS is not in SUBMITTED status")
   }
 
-  const userId = (session.user as any).id as number
+  const userId = Number((session.user as any).id)
   const now = new Date()
 
   const nextStatus =
