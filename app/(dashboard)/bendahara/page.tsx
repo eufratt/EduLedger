@@ -32,6 +32,15 @@ type BendaharaDashboardResponse = {
   }
 }
 
+type RkabBasic = {
+  id: number
+  code: string
+  fiscalYear: number
+  status: string
+  createdAt: string
+  _count?: { items: number }
+}
+
 function formatCompactIDR(n: number) {
   const abs = Math.abs(n)
   if (abs >= 1_000_000_000) return `Rp ${Math.round(n / 1_000_000_000)} M`
@@ -100,6 +109,7 @@ function MenuTile({
 export default function BendaharaDashboardPage() {
   const router = useRouter()
   const [data, setData] = useState<BendaharaDashboardResponse | null>(null)
+  const [rkabs, setRkabs] = useState<RkabBasic[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -133,6 +143,13 @@ export default function BendaharaDashboardPage() {
 
         const json = (await res.json()) as BendaharaDashboardResponse
         if (!cancelled) setData(json)
+
+        // Load RKAB list
+        const rkabRes = await fetch("/api/bendahara/rkab")
+        if (rkabRes.ok) {
+          const rkabJson = await rkabRes.json()
+          if (!cancelled) setRkabs(rkabJson.data || [])
+        }
       } catch (e: any) {
         if (!cancelled) setError(e?.message ?? "Gagal memuat dashboard")
       } finally {
@@ -257,7 +274,7 @@ export default function BendaharaDashboardPage() {
               label="Pencairan Dana"
             />
             <MenuTile
-              href="/bendahara/rkas"
+              href="/bendahara/rkas/create"
               iconBoxClass="bg-violet-500 text-white"
               icon={<FileText className="h-7 w-7" />}
               label="Membuat RKAS"
@@ -288,6 +305,47 @@ export default function BendaharaDashboardPage() {
               </span>
             )}
           </Link>
+        </div>
+
+        {/* RKAS Menunggu Persetujuan */}
+        <div className="mt-6">
+          <div className="mb-3 text-slate-700 font-semibold flex items-center justify-between">
+            <span>RKAS Menunggu Persetujuan</span>
+            <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-100">
+              {rkabs.filter(r => r.status === "SUBMITTED").length}
+            </Badge>
+          </div>
+          <div className="space-y-3">
+            {rkabs.filter(r => r.status === "SUBMITTED").length === 0 ? (
+              <div className="text-center py-8 rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50/50">
+                <FileText className="h-8 w-8 text-slate-300 mx-auto mb-2" />
+                <div className="text-sm text-slate-500 italic">Belum ada pengajuan RKAS</div>
+              </div>
+            ) : (
+              rkabs.filter(r => r.status === "SUBMITTED").map(r => (
+                <Link key={r.id} href={`/bendahara/rkas/${r.id}/edit`}>
+                  <Card className="rounded-2xl border-slate-100 shadow-[0_2px_16px_rgba(0,0,0,0.06)] hover:border-blue-200 hover:shadow-[0_4px_20px_rgba(37,99,235,0.1)] transition active:scale-[0.99] mb-3 overflow-hidden">
+                    <CardContent className="p-4 flex items-center gap-4">
+                      <div className="grid h-12 w-12 place-items-center rounded-xl bg-orange-50 text-orange-600 shrink-0">
+                        <FileText className="h-6 w-6" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="font-semibold text-slate-900 truncate">{r.code}</div>
+                        <div className="text-xs text-slate-500 mt-1 flex items-center gap-2">
+                          <span>Tahun {r.fiscalYear}</span>
+                          <span>•</span>
+                          <span>{r._count?.items ?? 0} Kegiatan</span>
+                        </div>
+                      </div>
+                      <Badge className="bg-orange-100 text-orange-700 hover:bg-orange-100 border-none px-2 py-0.5 text-[10px]">
+                        SUBMITTED
+                      </Badge>
+                    </CardContent>
+                  </Card>
+                </Link>
+              ))
+            )}
+          </div>
         </div>
 
         {/* Tindakan Diperlukan */}

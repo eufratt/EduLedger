@@ -90,13 +90,14 @@ model Rkab {
 model RkabItem {
   id              Int           @id @default(autoincrement())
   rkabId          Int
-  budgetRequestId Int           @unique
+  budgetRequestId Int?          @unique
+  name            String?
   amountAllocated Int
   usedAmount      Int           @default(0)
   note            String?
   createdAt       DateTime      @default(now())
   expenses        LedgerEntry[]
-  budgetRequest   BudgetRequest @relation(fields: [budgetRequestId], references: [id])
+  budgetRequest   BudgetRequest? @relation(fields: [budgetRequestId], references: [id])
   rkab            Rkab          @relation(fields: [rkabId], references: [id])
 
   @@index([rkabId])
