@@ -74,13 +74,6 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
         },
       })
 
-      if (r.status === BudgetRequestStatus.DISBURSED) {
-        await tx.budgetRequest.update({
-          where: { id },
-          data: { status: BudgetRequestStatus.COMPLETED },
-        })
-      }
-
       return proof
     })
 

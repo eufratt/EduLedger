@@ -268,7 +268,7 @@ export default function BendaharaDashboardPage() {
               label="Penerimaan Dana"
             />
             <MenuTile
-              href="/bendahara/pencairan"
+              href="/bendahara/pencairan-dana"
               iconBoxClass="bg-blue-500 text-white"
               icon={<TrendingDown className="h-7 w-7" />}
               label="Pencairan Dana"
