@@ -42,6 +42,7 @@ export async function GET(_req: Request, ctx: Ctx) {
       status: true,
       createdAt: true,
       submittedAt: true,
+      approvedAt: true,
       approvalNote: true,
       createdBy: { select: { id: true, name: true } },
       items: {
@@ -49,6 +50,8 @@ export async function GET(_req: Request, ctx: Ctx) {
         select: {
           id: true,
           amountAllocated: true,
+          usedAmount: true,
+          name: true,
           note: true,
           budgetRequest: {
             select: {
@@ -64,6 +67,7 @@ export async function GET(_req: Request, ctx: Ctx) {
   if (!rkab) return notFound()
 
   const totalAnggaran = rkab.items.reduce((a, b) => a + b.amountAllocated, 0)
+  const totalRealisasi = rkab.items.reduce((a, b) => a + b.usedAmount, 0)
 
   return NextResponse.json({
     data: {
@@ -72,15 +76,19 @@ export async function GET(_req: Request, ctx: Ctx) {
       title: `RKAS Tahun ${rkab.fiscalYear}/${rkab.fiscalYear + 1}`,
       pengaju: rkab.createdBy.name,
       diajukanAt: rkab.submittedAt ?? rkab.createdAt,
+      submittedAt: rkab.submittedAt,
+      approvedAt: rkab.approvedAt,
       status: rkab.status,
-      description: "Rencana kegiatan dan anggaran sekolah", // kalau mau dinamis: taruh di model Rkab (field description) dulu
+      description: "Rencana kegiatan dan anggaran sekolah",
       totalAnggaran,
+      totalRealisasi,
       rincian: rkab.items.map((it) => ({
         id: it.id,
-        nama: it.budgetRequest.title,
+        nama: it.budgetRequest?.title || it.name || "Tanpa Judul",
         amountAllocated: it.amountAllocated,
+        usedAmount: it.usedAmount,
         note: it.note ?? null,
-        requestId: it.budgetRequest.id,
+        requestId: it.budgetRequest?.id ?? null,
       })),
     },
   })

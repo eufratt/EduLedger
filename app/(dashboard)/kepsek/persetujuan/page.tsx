@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { ChevronLeft, Check, X, FileText, Info } from "lucide-react"
+import { ChevronLeft, Check, X, FileText, Info, Library, ReceiptText } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -131,65 +131,98 @@ export default function KepsekApprovalsPage() {
                                 <p className="text-slate-500 font-medium">Tidak ada permintaan menunggu</p>
                             </div>
                         ) : (
-                            data?.items.map((item) => (
-                                <Card
-                                    key={item.id}
-                                    className="rounded-2xl border-l-[6px] border-amber-400 shadow-sm overflow-hidden"
-                                >
-                                    <CardContent className="p-4">
-                                        <div className="flex justify-between items-start mb-2">
-                                            <div className="min-w-0">
-                                                <h3 className="font-bold text-slate-900 truncate">{item.title}</h3>
-                                                <p className="text-sm text-slate-500 mt-0.5">
-                                                    Pengaju: {item.pengaju || item.createdBy}
-                                                </p>
+                                data?.items.map((item) => (
+                                    <Card
+                                        key={item.id}
+                                        className={`rounded-2xl border-l-[6px] shadow-sm overflow-hidden ${
+                                            tab === "rkabs" ? "border-purple-500" : "border-amber-400"
+                                        }`}
+                                    >
+                                        <CardContent className="p-4 flex gap-4">
+                                            <div className={`mt-1 flex-shrink-0 w-12 h-12 rounded-2xl grid place-items-center ${
+                                                tab === "rkabs" ? "bg-purple-50 text-purple-600" : "bg-amber-50 text-amber-600"
+                                            }`}>
+                                                {tab === "rkabs" ? <Library className="h-6 w-6" /> : <ReceiptText className="h-6 w-6" />}
                                             </div>
-                                            <Badge className="bg-amber-100 text-amber-700 hover:bg-amber-100 border-none rounded-lg px-2 text-[10px] uppercase font-bold tracking-wider">
-                                                {item.statusLabel}
-                                            </Badge>
-                                        </div>
-
-                                        {item.amountRequested !== undefined && (
-                                            <div className="mt-3">
-                                                <p className="text-lg font-bold text-slate-800">
-                                                    {formatIDR(item.amountRequested)}
-                                                </p>
+                                            <div className="flex-1 min-w-0">
+                                                <div className="flex justify-between items-start mb-2">
+                                                    <div className="min-w-0">
+                                                    <div className="flex items-center gap-2 mb-1">
+                                                        {tab === "rkabs" && (
+                                                            <Badge className="bg-purple-100 text-purple-700 hover:bg-purple-100 border-none rounded-sm px-1 py-0 text-[9px] uppercase font-black">
+                                                                RKAS
+                                                            </Badge>
+                                                        )}
+                                                        <h3 className="font-bold text-slate-900 truncate leading-tight">{item.title}</h3>
+                                                    </div>
+                                                    <div className="flex items-center gap-1.5 text-xs text-slate-500 mt-1">
+                                                        <span className="font-medium">{item.pengaju || item.createdBy}</span>
+                                                        <span>•</span>
+                                                        <span>{new Date(item.createdAt).toLocaleDateString("id-ID", { day: 'numeric', month: 'short' })}</span>
+                                                    </div>
+                                                </div>
+                                                <Badge className="bg-amber-100 text-amber-700 hover:bg-amber-100 border-none rounded-lg px-2 text-[10px] uppercase font-bold tracking-wider">
+                                                    {item.statusLabel}
+                                                </Badge>
                                             </div>
-                                        )}
 
-                                        {item.code && (
-                                            <div className="mt-1">
-                                                <p className="text-sm font-medium text-blue-600">
-                                                    {item.code}
-                                                </p>
-                                            </div>
-                                        )}
+                                            {item.amountRequested !== undefined && (
+                                                <div className="mt-3">
+                                                    <p className="text-lg font-bold text-slate-800">
+                                                        {formatIDR(item.amountRequested)}
+                                                    </p>
+                                                </div>
+                                            )}
 
-                                        <div className="mt-5 grid grid-cols-3 gap-2">
-                                            <Link href={`/kepsek/persetujuan/${item.id}`} className="block">
-                                                <Button
-                                                    variant="secondary"
-                                                    className="w-full bg-blue-50 text-blue-600 hover:bg-blue-100 border-none rounded-xl h-11 text-sm font-bold"
+                                            {item.code && (
+                                                <div className="mt-1">
+                                                    <p className="text-sm font-medium text-blue-600">
+                                                        {item.code}
+                                                    </p>
+                                                </div>
+                                            )}
+
+                                            <div className="mt-5 grid grid-cols-3 gap-2">
+                                                <Link
+                                                    href={`/kepsek/persetujuan/${item.id}?type=${tab === "rkabs" ? "rkab" : "request"}`}
+                                                    className="block"
                                                 >
-                                                    Tinjau
+                                                    <Button
+                                                        variant="secondary"
+                                                        className="w-full bg-blue-50 text-blue-600 hover:bg-blue-100 border-none rounded-xl h-11 text-sm font-bold"
+                                                    >
+                                                        Tinjau
+                                                    </Button>
+                                                </Link>
+                                                <Button
+                                                    className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl h-11 text-sm font-bold"
+                                                    onClick={() =>
+                                                        router.push(
+                                                            `/kepsek/persetujuan/${item.id}?type=${
+                                                                tab === "rkabs" ? "rkab" : "request"
+                                                            }&action=approve`
+                                                        )
+                                                    }
+                                                >
+                                                    Setujui
                                                 </Button>
-                                            </Link>
-                                            <Button
-                                                className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl h-11 text-sm font-bold"
-                                                onClick={() => router.push(`/kepsek/persetujuan/${item.id}?action=approve`)}
-                                            >
-                                                Setujui
-                                            </Button>
-                                            <Button
-                                                className="bg-rose-600 hover:bg-rose-700 text-white rounded-xl h-11 text-sm font-bold"
-                                                onClick={() => router.push(`/kepsek/persetujuan/${item.id}?action=reject`)}
-                                            >
-                                                Tolak
-                                            </Button>
+                                                <Button
+                                                    className="bg-rose-600 hover:bg-rose-700 text-white rounded-xl h-11 text-sm font-bold"
+                                                    onClick={() =>
+                                                        router.push(
+                                                            `/kepsek/persetujuan/${item.id}?type=${
+                                                                tab === "rkabs" ? "rkab" : "request"
+                                                            }&action=reject`
+                                                        )
+                                                    }
+                                                >
+                                                    Tolak
+                                                </Button>
+                                            </div>
                                         </div>
                                     </CardContent>
-                                </Card>
-                            ))
+                                    </Card>
+                                ))
                         )}
                     </div>
                 )}

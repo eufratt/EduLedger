@@ -27,9 +27,9 @@ export async function GET(req: Request) {
 
   const url = new URL(req.url)
   const parsed = QuerySchema.safeParse({
-    tab: url.searchParams.get("tab"),
-    page: url.searchParams.get("page"),
-    take: url.searchParams.get("take"),
+    tab: url.searchParams.get("tab") || undefined,
+    page: url.searchParams.get("page") || undefined,
+    take: url.searchParams.get("take") || undefined,
   })
   const { tab, page, take } = parsed.success
     ? parsed.data
@@ -90,6 +90,11 @@ export async function GET(req: Request) {
         fiscalYear: true,
         createdAt: true,
         createdBy: { select: { id: true, name: true } },
+        items: {
+          select: {
+            amountAllocated: true,
+          },
+        },
       },
     }),
     prisma.rkab.count({ where: { status: RkabStatus.SUBMITTED } }),
@@ -103,9 +108,10 @@ export async function GET(req: Request) {
     total,
     items: items.map((x) => ({
       id: x.id,
-      title: `RKAS ${x.fiscalYear}`,
+      title: `RKAS Tahun ${x.fiscalYear}/${x.fiscalYear + 1}`,
       code: x.code,
       createdBy: x.createdBy.name,
+      amountRequested: x.items.reduce((sum, it) => sum + it.amountAllocated, 0),
       statusLabel: "Menunggu",
       createdAt: x.createdAt,
     })),
