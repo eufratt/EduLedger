@@ -62,12 +62,12 @@ export async function GET(_req: Request, ctx: Ctx) {
       amountAllocated: it.amountAllocated,
       usedAmount: it.usedAmount,
       note: it.note,
-      request: {
+      request: it.budgetRequest ? {
         id: it.budgetRequest.id,
         title: it.budgetRequest.title,
         pemohon: it.budgetRequest.submittedBy.name,
         amountRequested: it.budgetRequest.amountRequested,
-      },
+      } : null,
     })),
   })
 }
