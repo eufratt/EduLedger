@@ -59,8 +59,10 @@ export async function GET(req: Request) {
 
   const totalDana = totalDanaAgg._sum.amountRequested ?? 0
 
-  // Notifikasi: schema kamu belum punya model Notification
-  const unreadNotif = 0
+  // get true unread notifications
+  const unreadNotif = await prisma.notification.count({
+    where: { userId, isRead: false },
+  })
 
   return NextResponse.json({
     user: {

@@ -24,6 +24,7 @@ model User {
   rkabsCreated      Rkab[]          @relation("RkabCreatedBy")
   requestsDisbursed BudgetRequest[] @relation("RequestDisbursedBy")
   reportsCreated    FinancialReport[] @relation("FinancialReportCreatedBy")
+  notifications     Notification[]    @relation("UserNotifications")
 }
 
 model FundingSource {
@@ -199,4 +200,27 @@ model FinancialReport {
   @@unique([type, period])
   @@index([period])
   @@index([type])
+}
+
+model Notification {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  user      User     @relation("UserNotifications", fields: [userId], references: [id])
+  title     String
+  message   String
+  type      NotificationType @default(INFO)
+  isRead    Boolean  @default(false)
+  link      String?  // Optional link to redirect user (e.g., to a specific request)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([isRead])
+}
+
+enum NotificationType {
+  INFO
+  SUCCESS
+  WARNING
+  ERROR
 }

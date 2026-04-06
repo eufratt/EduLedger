@@ -2,8 +2,9 @@ import { NextResponse } from "next/server"
 import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/pages/api/auth/[...nextauth]"
 import { prisma } from "@/lib/prisma"
-import { RkabStatus, Role } from "@prisma/client"
+import { RkabStatus, Role, NotificationType } from "@prisma/client"
 import { z } from "zod"
+import { notifyKepsek } from "@/lib/notifications"
 
 const CreateRkabItemSchema = z.object({
   budgetRequestId: z.number().optional(),
@@ -88,6 +89,15 @@ export async function POST(req: Request) {
 
       return newRkab
     })
+
+
+    // Notify Kepsek
+    await notifyKepsek({
+      title: "RKAS Baru",
+      message: `${user.name} mengajukan RKAS Tahun ${rkab.fiscalYear}/${rkab.fiscalYear + 1} untuk ditinjau`,
+      type: NotificationType.INFO,
+      link: `/kepsek/persetujuan/${rkab.id}?type=rkab`
+    }).catch(err => console.error("Failed to notify Kepsek:", err))
 
     return NextResponse.json({ data: rkab }, { status: 201 })
   } catch (error: any) {

@@ -2,8 +2,9 @@ import { NextResponse } from "next/server"
 import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/pages/api/auth/[...nextauth]"
 import { prisma } from "@/lib/prisma"
-import { BudgetRequestStatus, Role } from "@prisma/client"
+import { BudgetRequestStatus, Role, NotificationType } from "@prisma/client"
 import { z } from "zod"
+import { notifyUser, notifyBendahara } from "@/lib/notifications"
 
 function unauthorized() {
   return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
@@ -56,7 +57,7 @@ export async function PATCH(req: Request, ctx: Ctx) {
 
   const existing = await prisma.budgetRequest.findUnique({
     where: { id },
-    select: { id: true, status: true },
+    select: { id: true, status: true, submittedById: true, title: true },
   })
   if (!existing) return notFound()
 
@@ -88,6 +89,24 @@ export async function PATCH(req: Request, ctx: Ctx) {
       approvalNote: true,
     },
   })
+
+
+  // Notify requester
+  await notifyUser(existing.submittedById, {
+    title: updated.status === BudgetRequestStatus.APPROVED ? "Pengajuan Disetujui" : "Pengajuan Ditolak",
+    message: `Pengajuan dana "${existing.title}" Anda telah ${updated.status === BudgetRequestStatus.APPROVED ? "disetujui" : "ditolak"}${updated.approvalNote ? `: ${updated.approvalNote}` : ""}`,
+    type: updated.status === BudgetRequestStatus.APPROVED ? NotificationType.SUCCESS : NotificationType.ERROR,
+    link: `/civitas/dashboard`
+  }).catch(err => console.error("Failed to notify requester:", err))
+
+  if (updated.status === BudgetRequestStatus.APPROVED) {
+    await notifyBendahara({
+      title: "Persetujuan Baru",
+      message: `Pengajuan dana "${existing.title}" telah disetujui Kepala Sekolah dan siap dicairkan`,
+      type: NotificationType.INFO,
+      link: `/bendahara/pencairan/${updated.id}`
+    }).catch(err => console.error("Failed to notify bendahara:", err))
+  }
 
   return NextResponse.json({ ok: true, data: updated })
 }

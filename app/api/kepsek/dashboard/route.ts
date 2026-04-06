@@ -49,6 +49,7 @@ export async function GET(req: Request) {
     // RKAS metrics
     rkabAgg,
     rkabReviewedCard,
+    unreadNotifications,
   ] = await Promise.all([
     prisma.budgetRequest.count({
       where: { status: BudgetRequestStatus.SUBMITTED },
@@ -105,6 +106,10 @@ export async function GET(req: Request) {
         items: { select: { amountAllocated: true } },
       },
     }),
+    // Unread notifications
+    prisma.notification.count({
+      where: { userId: Number((session.user as any).id), isRead: false },
+    }),
   ])
 
   const totalAnggaran = Number(rkabAgg._sum.amountAllocated ?? 0)
@@ -127,6 +132,7 @@ export async function GET(req: Request) {
       totalAnggaran,
       realisasiPercent,
       fiscalYear: year,
+      unreadNotifications: unreadNotifications,
     },
     persetujuanTertunda: {
       requests: pendingRequests.map((r) => ({

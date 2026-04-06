@@ -159,12 +159,16 @@ export default function CivitasDashboardPage() {
           <h1 className="text-lg font-semibold">Dashboard Civitas</h1>
 
           <div className="flex items-center gap-3">
-            <div className="relative">
-              <Bell className="h-6 w-6" />
-              <span className="absolute -right-2 -top-2 grid h-5 min-w-5 place-items-center rounded-full bg-red-500 px-1 text-xs font-semibold text-white">
-                {stats.unread}
-              </span>
-            </div>
+            <Link href="/civitas/notifikasi" className="relative group">
+              <div className="rounded-md p-1 group-hover:bg-white/10 transition">
+                <Bell className="h-6 w-6" />
+              </div>
+              {stats.unread > 0 && (
+                <span className="absolute -right-1 -top-1 grid h-5 min-w-5 place-items-center rounded-full bg-red-500 px-1 text-xs font-semibold text-white shadow-sm ring-2 ring-blue-600">
+                  {stats.unread}
+                </span>
+              )}
+            </Link>
 
             <button
               onClick={() => signOut({ callbackUrl: "/login" })}
@@ -262,14 +266,21 @@ export default function CivitasDashboardPage() {
           </Link>
 
 
-          <Card className="rounded-2xl">
-            <CardContent className="flex flex-col items-center justify-center gap-3 p-6">
-              <div className="grid h-14 w-14 place-items-center rounded-2xl bg-orange-500 text-white">
-                <Bell className="h-7 w-7" />
-              </div>
-              <div className="text-sm font-medium">Notifikasi</div>
-            </CardContent>
-          </Card>
+          <Link href="/civitas/notifikasi" className="block">
+            <Card className="rounded-2xl transition hover:shadow-md active:scale-[0.99] relative overflow-hidden">
+              <CardContent className="flex flex-col items-center justify-center gap-3 p-6">
+                <div className="relative grid h-14 w-14 place-items-center rounded-2xl bg-orange-500 text-white">
+                  <Bell className="h-7 w-7" />
+                  {stats.unread > 0 && (
+                    <span className="absolute -right-2 -top-2 grid h-6 min-w-6 place-items-center rounded-full bg-red-500 px-1 text-xs font-bold text-white shadow-sm ring-2 ring-white">
+                      {stats.unread}
+                    </span>
+                  )}
+                </div>
+                <div className="text-sm font-medium">Notifikasi</div>
+              </CardContent>
+            </Card>
+          </Link>
         </div>
 
         {/* Aktivitas Terbaru */}

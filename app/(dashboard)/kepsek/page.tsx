@@ -28,6 +28,7 @@ type KepsekDashboardResponse = {
         totalAnggaran: number
         realisasiPercent: number
         fiscalYear: number
+        unreadNotifications: number
     }
     persetujuanTertunda: {
         requests: Array<{
@@ -124,6 +125,7 @@ export default function KepsekDashboardPage() {
             totalAnggaran: c?.totalAnggaran ?? 0,
             realisasi: c?.realisasiPercent ?? 0,
             fiscalYear: c?.fiscalYear ?? new Date().getFullYear(),
+            unreadNotif: c?.unreadNotifications ?? 0,
             requests: data?.persetujuanTertunda.requests ?? [],
             rkabs: data?.persetujuanTertunda.rkabs ?? [],
             highlight: data?.highlight ?? null,
@@ -139,9 +141,9 @@ export default function KepsekDashboardPage() {
                     <div className="flex items-center gap-3">
                         <Link href="/kepsek/notifikasi" className="relative grid h-9 w-9 place-items-center rounded-xl bg-white/15 hover:bg-white/20 transition">
                             <Bell className="h-5 w-5" />
-                            {ui.notif > 0 && (
+                            {ui.unreadNotif > 0 && (
                                 <span className="absolute -right-2 -top-2 grid h-5 min-w-5 place-items-center rounded-full bg-rose-500 px-1 text-xs font-semibold">
-                                    {ui.notif}
+                                    {ui.unreadNotif}
                                 </span>
                             )}
                         </Link>

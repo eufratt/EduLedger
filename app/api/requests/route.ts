@@ -4,6 +4,8 @@ import { authOptions } from "@/pages/api/auth/[...nextauth]"
 import { prisma } from "@/lib/prisma"
 import { BudgetRequestStatus } from "@prisma/client"
 import { CreateRequestSchema } from "@/schemas/requests.schema"
+import { notifyKepsek, notifyBendahara } from "@/lib/notifications"
+import { NotificationType } from "@prisma/client"
 
 
 function badRequest(message: string) {
@@ -93,6 +95,23 @@ export async function POST(req: Request) {
       createdAt: true,
     },
   })
+
+
+  // Notify Kepsek
+  await notifyKepsek({
+    title: "Pengajuan Dana Baru",
+    message: `${session.user.name} mengajukan dana untuk ${created.title} sebesar Rp ${created.amountRequested.toLocaleString("id-ID")}`,
+    type: NotificationType.INFO,
+    link: `/kepsek/persetujuan/${created.id}?type=request`
+  }).catch(err => console.error("Failed to notify Kepsek:", err))
+
+  // Notify Bendahara FYI
+  await notifyBendahara({
+    title: "Pengajuan Baru",
+    message: `${session.user.name} mengajukan dana baru menunggu persetujuan Kepala Sekolah`,
+    type: NotificationType.INFO,
+    link: `/bendahara/pencairan-dana`
+  }).catch(err => console.error("Failed to notify Bendahara:", err))
 
   return NextResponse.json({ data: created }, { status: 201 })
 }

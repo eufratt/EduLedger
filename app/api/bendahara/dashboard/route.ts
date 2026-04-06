@@ -61,6 +61,11 @@ export async function GET(req: Request) {
     where: { status: BudgetRequestStatus.DISBURSED, proofs: { none: {} } },
   })
 
+  // get true unread notifications
+  const unreadNotifQ = prisma.notification.count({
+    where: { userId: Number(session.user.id), isRead: false },
+  })
+
   // aktivitas terbaru (ambil dari BudgetRequest biar relevan)
   const activityQ = prisma.budgetRequest.findMany({
     orderBy: { createdAt: "desc" },
@@ -75,7 +80,7 @@ export async function GET(req: Request) {
     },
   })
 
-  const [incomeAll, expenseAll, income12M, expense12M, readyAgg, missingProofCount, activities] =
+  const [incomeAll, expenseAll, income12M, expense12M, readyAgg, missingProofCount, activities, unreadNotif] =
     await Promise.all([
       incomeAllQ,
       expenseAllQ,
@@ -84,6 +89,7 @@ export async function GET(req: Request) {
       readyDisburseQ,
       missingProofQ,
       activityQ,
+      unreadNotifQ,
     ])
 
   const totalIncome = Number(incomeAll._sum.amount ?? 0)
@@ -95,8 +101,6 @@ export async function GET(req: Request) {
 
   const readyCount = Number(readyAgg._count._all ?? 0)
   const readyTotal = Number(readyAgg._sum.amountRequested ?? 0)
-
-  const unreadNotif = readyCount + missingProofCount
 
   return NextResponse.json({
     user: {

@@ -2,8 +2,9 @@ import { NextResponse } from "next/server"
 import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/pages/api/auth/[...nextauth]"
 import { prisma } from "@/lib/prisma"
-import { BudgetRequestStatus } from "@prisma/client"
+import { BudgetRequestStatus, NotificationType } from "@prisma/client"
 import { uploadToCloudinary, deleteFromCloudinary } from "@/lib/cloudinary"
+import { notifyBendahara } from "@/lib/notifications"
 
 export const runtime = "nodejs"
 
@@ -33,7 +34,7 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
     // Check ownership and status
     const request = await prisma.budgetRequest.findFirst({
       where: { id, submittedById: userId },
-      select: { id: true, status: true },
+      select: { id: true, status: true, title: true, submittedBy: { select: { name: true } } },
     })
 
     if (!request) {
@@ -86,6 +87,14 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
         uploadedAt: true,
       },
     })
+
+    // Notify Bendahara
+    await notifyBendahara({
+      title: "Upload Bukti Baru",
+      message: `${request.submittedBy.name} telah mengunggah bukti pengeluaran untuk ${request.title}`,
+      type: NotificationType.INFO,
+      link: `/bendahara/pencairan/${id}`
+    }).catch(e => console.error("Failed to notify bendahara", e))
 
     return NextResponse.json({ 
       success: true, 

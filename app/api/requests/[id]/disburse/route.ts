@@ -2,7 +2,8 @@ import { NextResponse } from "next/server"
 import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/pages/api/auth/[...nextauth]"
 import { prisma } from "@/lib/prisma"
-import { BudgetRequestStatus, CategoryType, Role } from "@prisma/client"
+import { BudgetRequestStatus, CategoryType, Role, NotificationType } from "@prisma/client"
+import { notifyUser } from "@/lib/notifications"
 
 export async function POST(
   _req: Request,
@@ -82,6 +83,22 @@ export async function POST(
 
       return { updatedRequest, updatedRkabItem, ledgerEntry }
     })
+
+    // Notify requester (Civitas)
+    await notifyUser(result.updatedRequest.submittedById, {
+      title: "Dana Dicairkan",
+      message: `Dana untuk "${result.updatedRequest.title}" telah dicairkan. Segera upload bukti pengeluaran.`,
+      type: NotificationType.INFO,
+      link: `/civitas/upload-bukti?requestId=${id}`
+    }).catch(e => console.error("Failed to notify civitas:", e))
+    
+    // Additional reminder notification per mockup
+    await notifyUser(result.updatedRequest.submittedById, {
+      title: "Upload Bukti",
+      message: "Jangan lupa upload bukti untuk pengajuan yang sudah dicairkan",
+      type: NotificationType.WARNING,
+      link: `/civitas/upload-bukti?requestId=${id}`
+    }).catch(e => console.error("Failed to notify civitas:", e))
 
     return NextResponse.json({
       message: "Fund disbursed successfully",

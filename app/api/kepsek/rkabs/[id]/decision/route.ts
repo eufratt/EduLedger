@@ -2,8 +2,9 @@ import { NextResponse } from "next/server"
 import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/pages/api/auth/[...nextauth]"
 import { prisma } from "@/lib/prisma"
-import { RkabStatus, Role } from "@prisma/client"
+import { RkabStatus, Role, NotificationType } from "@prisma/client"
 import { z } from "zod"
+import { notifyBendahara } from "@/lib/notifications"
 
 function unauthorized() {
   return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
@@ -55,7 +56,7 @@ export async function PATCH(req: Request, ctx: Ctx) {
 
   const existing = await prisma.rkab.findUnique({
     where: { id },
-    select: { id: true, status: true },
+    select: { id: true, status: true, fiscalYear: true },
   })
   if (!existing) return notFound()
 
@@ -84,6 +85,13 @@ export async function PATCH(req: Request, ctx: Ctx) {
       approvalNote: true,
     },
   })
+
+  await notifyBendahara({
+    title: updated.status === RkabStatus.APPROVED ? "RKAS Disetujui" : "RKAS Ditolak",
+    message: `RKAS Tahun ${existing.fiscalYear}/${existing.fiscalYear + 1} telah ${updated.status === RkabStatus.APPROVED ? "disetujui" : "ditolak"} Kepala Sekolah`,
+    type: updated.status === RkabStatus.APPROVED ? NotificationType.SUCCESS : NotificationType.ERROR,
+    link: `/bendahara/rkas`
+  }).catch(e => console.error("Failed to notify bendahara", e))
 
   return NextResponse.json({ ok: true, data: updated })
 }
