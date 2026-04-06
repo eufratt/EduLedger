@@ -221,30 +221,68 @@ export default function BendaharaPencairanDetailPage({ params }: { params: Promi
 
                 {/* Expenditure Proof Section */}
                 {(isDisbursed || isCompleted) && (
-                    <Card className="rounded-[2rem] bg-white border-none shadow-sm overflow-hidden">
+                    <Card className="rounded-[2.5rem] bg-white border-none shadow-sm overflow-hidden">
                         <CardContent className="p-8">
-                            <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-6">Bukti Pengeluaran</h3>
+                            <div className="flex items-center justify-between mb-6">
+                                <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest">Bukti Pengeluaran</h3>
+                                {isCompleted && (
+                                    <Badge className="bg-emerald-50 text-emerald-600 border-none px-2 py-0.5 text-[9px] uppercase font-bold tracking-widest">
+                                        Terverifikasi
+                                    </Badge>
+                                )}
+                            </div>
                             
                             {!hasProofs ? (
-                                <div className="text-center py-10 bg-slate-50 rounded-[1.5rem] border border-dashed border-slate-200">
-                                    <AlertCircle className="h-10 w-10 text-slate-300 mx-auto mb-3" />
-                                    <p className="text-sm font-bold text-slate-400">Belum ada bukti diupload</p>
+                                <div className="text-center py-12 bg-slate-50/50 rounded-[2rem] border-2 border-dashed border-slate-100 flex flex-col items-center gap-3">
+                                    <div className="w-16 h-16 rounded-full bg-slate-100/50 text-slate-300 grid place-items-center">
+                                        <AlertCircle className="h-8 w-8" />
+                                    </div>
+                                    <p className="text-sm font-bold text-slate-400">Menunggu upload dari pemohon</p>
                                 </div>
                             ) : (
-                                <div className="space-y-4">
-                                    <div className="p-6 bg-slate-50 rounded-[1.5rem] border border-slate-100 text-center flex flex-col items-center gap-3 group">
-                                        <div className="w-14 h-14 rounded-full bg-blue-50 text-blue-600 grid place-items-center mb-2 group-hover:scale-110 transition-transform">
-                                            <ReceiptText className="h-7 w-7" />
-                                        </div>
-                                        <p className="text-sm font-bold text-slate-600">Bukti telah diupload</p>
-                                        <a 
-                                            href={data.proofs![0].fileUrl} 
-                                            target="_blank" 
-                                            className="text-blue-600 text-sm font-black hover:underline underline-offset-4"
-                                        >
-                                            Lihat Bukti
-                                        </a>
-                                    </div>
+                                <div className="space-y-6">
+                                    {data.proofs!.map((proof, idx) => {
+                                        const isImage = proof.fileName.match(/\.(jpg|jpeg|png)$/i)
+                                        return (
+                                            <div key={proof.id} className="group relative">
+                                                {isImage ? (
+                                                    <div className="overflow-hidden rounded-[1.5rem] border border-slate-100 bg-slate-50 shadow-inner">
+                                                        <img 
+                                                            src={proof.fileUrl} 
+                                                            alt="Bukti Pengeluaran" 
+                                                            className="w-full h-auto max-h-[300px] object-contain transition-transform duration-500 group-hover:scale-[1.02]"
+                                                        />
+                                                        <div className="absolute inset-x-0 bottom-0 p-4 bg-gradient-to-t from-black/20 to-transparent">
+                                                            <a 
+                                                                href={proof.fileUrl} 
+                                                                target="_blank" 
+                                                                className="flex items-center justify-center gap-2 w-full py-3 rounded-xl bg-white/95 backdrop-blur shadow-lg text-xs font-black text-slate-900 group-hover:bg-white transition-colors"
+                                                            >
+                                                                <ReceiptText className="h-4 w-4" />
+                                                                BUKA FULLSCREEN
+                                                            </a>
+                                                        </div>
+                                                    </div>
+                                                ) : (
+                                                    <div className="p-6 bg-slate-50 rounded-[1.5rem] border border-slate-100 flex items-center gap-4 group-hover:bg-slate-100/50 transition-colors">
+                                                        <div className="w-14 h-14 rounded-2xl bg-white shadow-sm grid place-items-center text-blue-600">
+                                                            <ReceiptText className="h-7 w-7" />
+                                                        </div>
+                                                        <div className="flex-1 min-w-0">
+                                                            <p className="text-sm font-bold text-slate-900 truncate">{proof.fileName}</p>
+                                                            <a 
+                                                                href={proof.fileUrl} 
+                                                                target="_blank" 
+                                                                className="text-xs font-bold text-blue-600 hover:underline"
+                                                            >
+                                                                Download Dokumen (PDF)
+                                                            </a>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )
+                                    })}
                                 </div>
                             )}
                         </CardContent>
@@ -253,19 +291,34 @@ export default function BendaharaPencairanDetailPage({ params }: { params: Promi
 
                 {/* Info Text */}
                 {isPendingDisbursement && (
-                    <div className="flex items-start gap-4 p-5 bg-blue-50/50 border border-blue-100 rounded-3xl">
-                        <Info className="h-5 w-5 text-blue-500 mt-1 shrink-0" />
-                        <p className="text-sm font-semibold text-blue-800 leading-relaxed">
-                            Pastikan anda sudah menyerahkan dana kepada {data.requester} sebelum menekan tombol Cairkan Dana.
+                    <div className="flex items-start gap-4 p-6 bg-blue-50/50 border border-blue-100 rounded-[2rem] shadow-sm">
+                        <div className="p-2 bg-blue-100 rounded-xl text-blue-600">
+                            <Info className="h-5 w-5" />
+                        </div>
+                        <p className="text-sm font-bold text-blue-800/80 leading-relaxed pt-1">
+                            Anda menyetujui penyerahan dana sebesar <span className="text-blue-600 font-black">{formatIDR(data.amountRequested)}</span> kepada <span className="font-black text-blue-800">{data.requester}</span>.
                         </p>
                     </div>
                 )}
 
-                {isDisbursed && (
-                    <div className="flex items-start gap-4 p-5 bg-emerald-50 border border-emerald-100 rounded-3xl animate-in zoom-in-95 duration-300">
-                        <CheckCircle2 className="h-5 w-5 text-emerald-500 mt-0.5 shrink-0" />
-                        <p className="text-sm font-semibold text-emerald-800 leading-relaxed">
-                            Dana telah dicairkan. Menunggu upload bukti dari pemohon.
+                {isDisbursed && !hasProofs && (
+                    <div className="flex items-start gap-4 p-6 bg-amber-50/50 border border-amber-100 rounded-[2rem] animate-in zoom-in-95 duration-300">
+                        <div className="p-2 bg-amber-100 rounded-xl text-amber-600">
+                            <Loader2 className="h-5 w-5 animate-spin" />
+                        </div>
+                        <p className="text-sm font-bold text-amber-800 leading-relaxed pt-1">
+                            Dana telah dicairkan. Menunggu pemohon melampirkan bukti transaksi.
+                        </p>
+                    </div>
+                )}
+
+                {isDisbursed && hasProofs && (
+                    <div className="flex items-start gap-4 p-6 bg-emerald-50 border border-emerald-100 rounded-[2rem] animate-in slide-in-from-top-4 duration-500">
+                        <div className="p-2 bg-emerald-100 rounded-xl text-emerald-600">
+                            <CheckCircle2 className="h-5 w-5" />
+                        </div>
+                        <p className="text-sm font-bold text-emerald-800 leading-relaxed pt-1">
+                            Bukti sudah tersedia. Silakan validasi bukti tersebut untuk menyelesaikan siklus anggaran ini.
                         </p>
                     </div>
                 )}
@@ -277,15 +330,20 @@ export default function BendaharaPencairanDetailPage({ params }: { params: Promi
                     <div className="mx-auto max-w-md">
                         {isPendingDisbursement ? (
                             <Button
-                                className="w-full h-16 rounded-3xl bg-blue-600 hover:bg-blue-700 text-white font-black text-lg shadow-[0_8px_30px_rgb(37,99,235,0.4)] transition-all hover:-translate-y-1 active:scale-95 group overflow-hidden relative"
+                                className="w-full h-16 rounded-[2rem] bg-blue-600 hover:bg-blue-700 text-white font-black text-lg shadow-xl shadow-blue-100 transition-all hover:-translate-y-1 active:scale-95 group"
                                 onClick={() => setIsConfirming(true)}
+                                disabled={isSubmitting}
                             >
-                                <CheckCircle2 className="mr-3 h-6 w-6 group-hover:scale-110 transition-transform" />
-                                Cairkan Dana
+                                {isSubmitting ? <Loader2 className="h-6 w-6 animate-spin" /> : (
+                                    <>
+                                        <CheckCircle2 className="mr-3 h-6 w-6 group-hover:scale-110 transition-transform" />
+                                        Cairkan Dana
+                                    </>
+                                )}
                             </Button>
                         ) : (
                             <Button
-                                className="w-full h-16 rounded-3xl bg-emerald-600 hover:bg-emerald-700 text-white font-black text-lg shadow-[0_8px_30px_rgb(5,150,105,0.4)] transition-all hover:-translate-y-1 active:scale-95 group overflow-hidden relative"
+                                className="w-full h-16 rounded-[2rem] bg-emerald-600 hover:bg-emerald-700 text-white font-black text-lg shadow-xl shadow-emerald-100 transition-all hover:-translate-y-1 active:scale-95 group"
                                 onClick={handleValidate}
                                 disabled={isValidating}
                             >
@@ -294,7 +352,7 @@ export default function BendaharaPencairanDetailPage({ params }: { params: Promi
                                 ) : (
                                     <>
                                         <CheckCircle2 className="mr-3 h-6 w-6 group-hover:scale-110 transition-transform" />
-                                        Validasi Pencairan
+                                        Validasi Selesai
                                     </>
                                 )}
                             </Button>
@@ -305,26 +363,29 @@ export default function BendaharaPencairanDetailPage({ params }: { params: Promi
 
             {/* Confirmation Dialog */}
             <Dialog open={isConfirming} onOpenChange={setIsConfirming}>
-                <DialogContent className="max-w-[340px] rounded-[2.5rem] p-8 border-none shadow-2xl flex flex-col items-center text-center gap-6" showCloseButton={false}>
-                    <div className="w-20 h-20 rounded-full bg-blue-50 text-blue-600 grid place-items-center shadow-inner scale-110">
-                        <AlertCircle className="h-10 w-10" />
+                <DialogContent className="max-w-[360px] rounded-[3rem] p-10 border-none shadow-2xl flex flex-col items-center text-center gap-8" showCloseButton={false}>
+                    <div className="relative">
+                        <div className="absolute inset-0 scale-150 bg-blue-100 blur-2xl rounded-full opacity-50" />
+                        <div className="relative w-24 h-24 rounded-full bg-blue-50 text-blue-600 grid place-items-center shadow-inner scale-110">
+                            <AlertCircle className="h-10 w-10" />
+                        </div>
                     </div>
-                    <DialogHeader className="space-y-2">
-                        <DialogTitle className="text-2xl font-black text-slate-900">Konfirmasi Pencairan</DialogTitle>
-                        <DialogDescription className="text-slate-500 font-medium">
-                            Ingin mencairkan dana sebesar <span className="font-bold text-slate-900">{formatIDR(data.amountRequested)}</span> untuk pengajuan <span className="font-bold text-slate-900">"{data.title}"</span>?
+                    <DialogHeader className="space-y-3">
+                        <DialogTitle className="text-2xl font-black text-slate-900 leading-tight">Konfirmasi Pencairan</DialogTitle>
+                        <DialogDescription className="text-slate-500 font-bold leading-relaxed px-2">
+                            Lanjutkan pencairan dana <span className="text-blue-600 underline decoration-blue-200 underline-offset-4">{formatIDR(data.amountRequested)}</span> untuk <span className="text-slate-800">"{data.title}"</span>?
                         </DialogDescription>
                     </DialogHeader>
-                    <div className="grid grid-cols-2 gap-4 w-full">
+                    <div className="grid grid-cols-2 gap-4 w-full pt-2">
                         <Button
-                            variant="secondary"
-                            className="h-14 rounded-2xl font-black bg-slate-100 hover:bg-slate-200 text-slate-600"
+                            variant="ghost"
+                            className="h-16 rounded-[1.5rem] font-black text-slate-400 hover:text-slate-900 hover:bg-slate-100"
                             onClick={() => setIsConfirming(false)}
                         >
                             Batal
                         </Button>
                         <Button
-                            className="h-14 rounded-2xl font-black bg-blue-600 hover:bg-blue-700 text-white shadow-lg"
+                            className="h-16 rounded-[1.5rem] font-black bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-100"
                             onClick={handleDisburse}
                             disabled={isSubmitting}
                         >
@@ -341,23 +402,30 @@ export default function BendaharaPencairanDetailPage({ params }: { params: Promi
                     router.push("/bendahara/pencairan-dana")
                 }
             }}>
-                <DialogContent className="max-w-[320px] rounded-[2.5rem] p-10 border-none shadow-2xl flex flex-col items-center text-center gap-6" showCloseButton={false}>
-                    <div className="w-24 h-24 rounded-full bg-emerald-50 text-emerald-500 grid place-items-center shadow-inner relative overflow-hidden">
-                        <div className="absolute inset-0 bg-emerald-400/20 animate-ping" />
-                        <CheckCircle2 className="h-12 w-12 relative z-10" />
+                <DialogContent className="max-w-[360px] rounded-[3rem] p-12 border-none shadow-2xl flex flex-col items-center text-center gap-8" showCloseButton={false}>
+                    <div className="relative">
+                        <div className="absolute inset-0 scale-150 bg-emerald-100 blur-2xl rounded-full opacity-50" />
+                        <div className="relative w-28 h-28 rounded-full bg-emerald-50 text-emerald-500 grid place-items-center shadow-inner">
+                            <div className="absolute inset-0 bg-emerald-400/20 animate-ping rounded-full" />
+                            <CheckCircle2 className="h-14 w-14 relative z-10" />
+                        </div>
                     </div>
-                    <div className="space-y-2">
-                        <DialogTitle className="text-2xl font-black text-slate-900 leading-tight">Berhasil!</DialogTitle>
-                        <p className="text-slate-500 font-medium">Dana telah berhasil dicairkan dan dicatat ke dalam buku kas.</p>
+                    <div className="space-y-3">
+                        <DialogTitle className="text-3xl font-black text-slate-900 leading-tight">Luar Biasa!</DialogTitle>
+                        <p className="text-slate-500 font-bold leading-relaxed">
+                            {successType === "disburse" 
+                                ? "Dana telah berhasil dicairkan dan transaksi telah dicatat secara otomatis." 
+                                : "Pengajuan telah diverifikasi sepenuhnya dan status kini menjadi Selesai."}
+                        </p>
                     </div>
                     <Button
-                        className="w-full h-14 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-black shadow-lg shadow-emerald-200"
+                        className="w-full h-16 bg-emerald-600 hover:bg-emerald-700 text-white rounded-[1.5rem] font-black text-lg shadow-xl shadow-emerald-100 transition-all active:scale-95"
                         onClick={() => {
                             setIsSuccess(false)
                             router.push("/bendahara/pencairan-dana")
                         }}
                     >
-                        Selesai
+                        Tutup
                     </Button>
                 </DialogContent>
             </Dialog>

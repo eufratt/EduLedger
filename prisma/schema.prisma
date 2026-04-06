@@ -163,6 +163,7 @@ model RequestProof {
   id         Int      @id @default(autoincrement())
   requestId  Int
   fileUrl    String
+  publicId   String?  @unique
   fileName   String
   mimeType   String
   size       Int
