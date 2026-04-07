@@ -19,7 +19,7 @@ const GetQuerySchema = z.object({
   type: z.nativeEnum(CategoryType).optional(),
   q: z.string().trim().max(80).optional(),
   cursor: z.coerce.number().int().positive().optional(),
-  take: z.coerce.number().int().min(1).max(50).default(20),
+  take: z.coerce.number().int().min(1).max(100).default(20),
 })
 
 const PostBodySchema = z.object({
@@ -91,9 +91,13 @@ export async function GET(req: Request) {
     ...(searchWhere ?? {}),
   }
 
-  const [sum, items] = await Promise.all([
+  const [sumIncome, sumExpense, items] = await Promise.all([
     prisma.ledgerEntry.aggregate({
-      where,
+      where: { date: { gte: start, lt: end }, type: CategoryType.INCOME },
+      _sum: { amount: true },
+    }),
+    prisma.ledgerEntry.aggregate({
+      where: { date: { gte: start, lt: end }, type: CategoryType.EXPENSE },
       _sum: { amount: true },
     }),
     prisma.ledgerEntry.findMany({
@@ -137,7 +141,9 @@ export async function GET(req: Request) {
   return NextResponse.json({
     period: periodUsed,
     range: { start: start.toISOString(), end: end.toISOString() },
-    total: Number(sum._sum.amount ?? 0),
+    totalIncome: Number(sumIncome._sum.amount ?? 0),
+    totalExpense: Number(sumExpense._sum.amount ?? 0),
+    totalBalance: Number(sumIncome._sum.amount ?? 0) - Number(sumExpense._sum.amount ?? 0),
     q: q ?? null,
     nextCursor,
     items: mapped,
