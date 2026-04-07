@@ -110,7 +110,7 @@ export async function POST(req: Request) {
     title: "Pengajuan Baru",
     message: `${session.user.name} mengajukan dana baru menunggu persetujuan Kepala Sekolah`,
     type: NotificationType.INFO,
-    link: `/bendahara/pencairan-dana`
+    link: `/bendahara/pencairan`
   }).catch(err => console.error("Failed to notify Bendahara:", err))
 
   return NextResponse.json({ data: created }, { status: 201 })
