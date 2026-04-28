@@ -46,12 +46,6 @@ export default function AjukanDanaPage() {
     const [error, setError] = useState<string | null>(null)
     const [openSuccess, setOpenSuccess] = useState(false)
 
-    useEffect(() => {
-        if (!openSuccess) return
-        const t = setTimeout(() => router.replace("/civitas"), 1200)
-        return () => clearTimeout(t)
-    }, [openSuccess, router])
-
     async function onSubmit(e: FormEvent) {
         e.preventDefault()
         setError(null)
@@ -99,10 +93,6 @@ export default function AjukanDanaPage() {
             setAmountDisplay("")
             setAmountRaw(0)
             setNeededBy("")
-
-            setTimeout(() => {
-                router.replace("/civitas")
-            }, 1200)
         } catch (err: any) {
             setError(err?.message ?? "Gagal mengirim pengajuan.")
         } finally {
@@ -113,7 +103,7 @@ export default function AjukanDanaPage() {
     return (
         <div className="min-h-screen bg-background">
             {/* Topbar */}
-            <header className="sticky top-0 z-50 h-14 bg-primary text-primary-foreground shadow">
+            <header className="sticky top-0 z-50 h-14 bg-blue-600 text-white shadow">
                 <div className="mx-auto flex h-14 max-w-md items-center gap-3 px-4">
                     <Link href="/civitas" className="rounded-md p-1 hover:bg-white/10 transition" aria-label="Kembali">
                         <ArrowLeft className="h-6 w-6" />
@@ -242,6 +232,13 @@ export default function AjukanDanaPage() {
                         <p className="mt-2 text-sm text-muted-foreground">
                             Pengajuan dana Anda telah dikirim dan menunggu persetujuan
                         </p>
+
+                        <Button 
+                            className="mt-6 w-full rounded-xl" 
+                            onClick={() => router.replace("/civitas")}
+                        >
+                            Kembali ke Dashboard
+                        </Button>
                     </div>
                 </DialogContent>
             </Dialog>

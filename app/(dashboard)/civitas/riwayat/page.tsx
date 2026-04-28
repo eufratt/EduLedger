@@ -166,7 +166,7 @@ export default function RiwayatPengajuanPage() {
   return (
     <div className="min-h-screen bg-background">
       {/* Topbar */}
-      <header className="sticky top-0 z-50 h-14 bg-primary text-primary-foreground shadow">
+      <header className="sticky top-0 z-50 h-14 bg-blue-600 text-white shadow">
         <div className="mx-auto flex h-14 max-w-md items-center gap-3 px-4">
           <Link href="/civitas" className="rounded-md p-1 hover:bg-white/10 transition" aria-label="Kembali">
             <ArrowLeft className="h-6 w-6" />
