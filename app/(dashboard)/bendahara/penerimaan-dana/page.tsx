@@ -67,9 +67,9 @@ export default function Page() {
         const j = await res.json().catch(() => null)
         throw new Error(j?.error || `Gagal load data (${res.status})`)
       }
-      const j = (await res.json()) as { items: LedgerEntry[]; total: number }
+      const j = (await res.json()) as { items: LedgerEntry[]; totalIncome?: number; total?: number }
       setItems(Array.isArray(j.items) ? j.items : [])
-      setTotal(Number(j.total ?? 0))
+      setTotal(Number(j.totalIncome ?? j.total ?? 0))
     } catch (e: any) {
       setErr(e?.message || "Gagal load data")
       setItems([])
